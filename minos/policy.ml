@@ -80,6 +80,10 @@ module Predicate = struct
     Util.calls_of_sub sub |> List.map ~f:Tid.name |>
     List.exists ~f:(fun call_name' -> call_name = call_name')
 
+  let contains_calls call_names sub =
+    Util.calls_of_sub sub |> List.map ~f:Tid.name |>
+    List.exists ~f:(fun call_name' ->
+        List.exists call_names ~f:(fun call_name -> call_name = call_name'))
 
   let c_ite exp =
     (object inherit [bool] Bil.visitor

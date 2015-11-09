@@ -11,3 +11,5 @@ let system_check = System_check.check
 let sprintf_check = Sprintf_check.check
 let strcpy_check = Strcpy_check.check
 let sql_check = Sql_check.check
+let ident : Check.t = Check.({should_produce = (fun _ -> true);
+                              run = (fun _ -> 5)})

@@ -1,3 +1,12 @@
+(** Spec:
+    Emit 0 for paths where
+      a) there is no data dependence of arg3 on on jumps
+      b) the dependence span is 1 (subsumes a)
+      c) the path does not contain an ite
+      d) the path does not contain a call to malloc (which would imply that
+         memory is allocated to the right size before the memcpy)
+*)
+
 open Bap.Std
 open Core_kernel.Std
 open Options
@@ -20,18 +29,17 @@ let should_produce' args sink_blk =
 (** CHECK *)
 let check_path' inter_dependence path_attrs sub_path sink_blk =
   match path_attrs with
-  | {args = {arg3 = Some (tid,_,_)}} when P.arg_is_const_0 sink_blk tid -> 5
   | {args = {arg3 = Some (_,_,dep)}; jmp_deps; num_blks} when
       P.size_eq_0 inter_dependence &&
       Policy.dep_blk_span dep sub_path = 1 &&
       not (P.contains_ite sub_path dep) &&
-      not (P.contains_call "@.malloc" sub_path)
+      not (P.contains_calls ["@.malloc"; "@malloc"] sub_path)
     -> 0
   | {args = {arg3 = Some (_,_,dep)}; jmp_deps; num_blks} when
       P.size_eq_0 inter_dependence &&
       Policy.dep_blk_span dep sub_path < 3 &&
       not (P.contains_ite sub_path dep) &&
-      not (P.contains_call "@.malloc" sub_path)
+      not (P.contains_calls ["@.malloc"; "@malloc"] sub_path)
     -> 1
   | {args = {arg3 = Some (_,_,dep)}; jmp_deps; num_blks} when
       P.size_eq_0 inter_dependence &&
@@ -40,6 +48,7 @@ let check_path' inter_dependence path_attrs sub_path sink_blk =
   (** any number of blocks *)
   | {args = {arg3 = Some (_,_,dep)}; jmp_deps} when
       P.size_eq_0 inter_dependence -> 3
+  | {args = {arg3 = Some (tid,_,_)}} when P.arg_is_const_0 sink_blk tid -> 5
   | _ -> 4
 
 let check_path sink_blk sub_path (ctxt : Check.ctxt) path_attrs =
