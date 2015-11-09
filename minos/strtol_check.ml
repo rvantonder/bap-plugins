@@ -1,3 +1,9 @@
+(** Spec:
+    Emit 0 for paths where
+      a) arg1 is not a const
+      b) there is no data dependence of arg1 on on jumps
+*)
+
 open Bap.Std
 open Core_kernel.Std
 open Policy
@@ -14,7 +20,7 @@ let max_paths = 300
 let should_produce' args sink_blk =
   match args with
   | {arg1 = Some (tid,_,_)} ->
-    Policy.Predicate.arg_is_not_const sink_blk tid
+    P.arg_is_not_const sink_blk tid
   | _ -> false
 
 (** CHECK *)

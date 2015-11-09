@@ -454,19 +454,21 @@ let resolve_symbols_of_calls project () =
               | Some name -> Format.printf ": %s\n" name
               | None -> ())))
 
+(** TODO add check that confirms no back-edges are traversed *)
 let num_paths_dag
-(module G : Graphlib.Graph with type edge = Graphlib.Tid.Tid.edge and
-type node = tid and type t = Graphlib.Tid.Tid.t)
-graph start_tid =
+    (module G : Graphlib.Graph with type edge = Graphlib.Tid.Tid.edge and
+    type node = tid and type t = Graphlib.Tid.Tid.t)
+    graph start_tid =
   let dp = Tid.Table.create () in
   let rec go curr : int =
     if (G.Node.succs curr graph |> Seq.length) = 0 then
       1
     else match Tid.Table.find dp curr with
       | Some s -> s
-      | None -> let sum =
-                  Seq.fold ~init:0 (G.Node.succs curr graph)
-                    ~f:(fun sum child -> sum + go child) in
+      | None ->
+        let sum =
+          Seq.fold ~init:0 (G.Node.succs curr graph)
+            ~f:(fun sum child -> sum + go child) in
         Tid.Table.add_exn dp curr sum;
         sum
   in go start_tid

@@ -1,4 +1,5 @@
 type options = {
+  check : string;
   config : string;
   debug: bool;
   cuts_only: bool;

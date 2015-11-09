@@ -2,13 +2,18 @@ open Core_kernel.Std
 open Bap.Std
 open Options
 
-let check = Check_suite.system_check
 let max_depth = (-1)
 
 module Cmdline = struct
   open Cmdliner
+
+  let check : string option Term.t =
+    let doc = "The check that should be run" in
+    Arg.(value & opt (some string) None &
+         info ["check"] ~doc)
+
   let config : string option Term.t =
-    let doc = "config file for source sink analysis" in
+    let doc = "Config file for source sink analysis" in
     Arg.(value & opt (some string) None &
          info ["config"] ~doc)
 
@@ -81,10 +86,11 @@ module Cmdline = struct
   let info =
     Term.info ~doc:"Minos" "Minos"
 
-  let process_args config srcs_f sinks_f debug cuts_only
+  let process_args check config srcs_f sinks_f debug cuts_only
       trims_only path_counts_only single_trim single_cut single_case
       mem_to_reg fold_consts output_dot_path out_dir verbose =
     let (!) opt default = Option.value opt ~default in
+    let check = !check "" in
     let config = !config "" in
     let srcs_f = !srcs_f "" in
     let sinks_f = !sinks_f "" in
@@ -92,7 +98,7 @@ module Cmdline = struct
     let single_trim = !single_trim (-1) in
     let single_cut = !single_cut (-1) in
     let out_dir = !out_dir "./analysis/" in
-    { config; debug; cuts_only;
+    { check; config; debug; cuts_only;
       trims_only; path_counts_only;
       srcs_f; sinks_f; single_trim;
       single_cut; single_case;
@@ -102,6 +108,7 @@ module Cmdline = struct
   let parse argv =
     match Term.eval ~argv
             (Term.(pure process_args
+                   $check
                    $config
                    $srcs_f
                    $sinks_f
@@ -124,6 +131,21 @@ end
 
 module Plugin (E : sig val project : project val options : options end) = struct
   open E
+
+  let check () =
+    Format.printf "~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
+    (match options.check with
+     | "" -> Format.printf "~Check selected: NONE\n"
+     | _ ->  Format.printf "~Check selected: %s\n" options.check);
+    Format.printf "~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
+    match options.check with
+    | "memcpy" -> Check_suite.memcpy_check
+    | "sql" -> Check_suite.sql_check
+    | "system" -> Check_suite.system_check
+    | "strcpy" -> Check_suite.strcpy_check
+    | "atoi" -> Check_suite.strtol_check
+    | "sprintf" -> Check_suite.sprintf_check
+    | _ -> Check_suite.ident
 
   let _v tag s =
     if options.debug then
@@ -230,6 +252,9 @@ module Plugin (E : sig val project : project val options : options end) = struct
             | (_,_) -> ()));
 
     if options.trims_only then exit 0;
+
+
+    let check = check () in
 
     (* 4. paths *)
     Seq.iteri trim_groups ~f:(fun i trim_group ->
