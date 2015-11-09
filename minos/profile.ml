@@ -2,7 +2,7 @@ open Core_kernel.Std
 open Bap.Std
 open Color
 
-type sub_profile = {
+type t = {
   name : string;
   num_blks : int;
   num_calls : int;
@@ -178,7 +178,7 @@ let print_program_profile ?(note="") program =
       let src_tid = Cfg.Edge.src edge |> tid_of_node in
       let dst_tid = Cfg.Edge.dst edge |> tid_of_node in
 
-      (** Gross, but will work. Runs for each edge. crap *)
+      (** Gross, but will work. Runs for each edge. *)
       let dst_after_src =
         match Seq.findi path ~f:(fun i tid -> Tid.name tid = src_tid) with
         | Some (i,fsrc_tid) -> (

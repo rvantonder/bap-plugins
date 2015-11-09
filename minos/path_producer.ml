@@ -254,7 +254,7 @@ let produce project options path_dir trim_dir max_depth trim check =
     hide_back_edges sub (module G) |>
     hide_non_existing sub |>
     trim_reachable trim in
-  (*debug "filtered_graph_view.dot" filtered_graph graph;*)
+  (** debug "filtered_graph_view.dot" filtered_graph graph;*)
 
   (** 1) Create a sub from all nodes in the filtered graph (in case any were
       removed by that process)
@@ -296,9 +296,12 @@ let produce project options path_dir trim_dir max_depth trim check =
   Output.paths trim_dir
     (Format.sprintf "Total possible paths: %d\n%!" num_paths);
 
+  (** Debug *)
+  (*
   let res = Profile.sub_profile_with_view filtered_graph init_ctxt.trim.trim_sub in
   Output.output_trim init_ctxt.trim.src_tid init_ctxt.trim.sink_tid
     init_ctxt.trim.trim_sub init_ctxt.trim.cut_group.id 0 0 res;
+     *)
 
   let open Check in
   let check_ctxt = producer_ctxt_of_ctxt init_ctxt num_paths in

@@ -7,6 +7,7 @@
 *)
 
 type options = {
+  check : string; (* the check to use *)
   config : string; (* config file, unused currently *)
   debug: bool; (* activate debugging output *)
   cuts_only: bool; (* produce only cut groups *)

@@ -1,5 +1,6 @@
 open Bap.Std
 open Core_kernel.Std
+open Profile
 
 (* Output meta information of analysis for cut groups *)
 (* `Valid groups have source before sink.
@@ -46,4 +47,4 @@ val path_priority : string -> int -> int -> unit
 val trim_priority : string -> int -> unit
 
 (* Output bulk trim information *)
-val output_trim : tid -> tid -> Sub.t -> int -> int -> int -> Profile.sub_profile -> unit
+val output_trim : tid -> tid -> Sub.t -> int -> int -> int -> Profile.t -> unit

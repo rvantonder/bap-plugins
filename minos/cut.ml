@@ -202,6 +202,8 @@ let lca_nth_of_sink project nth sink callgraph =
 
   let callstrings_sinks = callstrings project sink callgraph in
   print_callstrings ~v:true callstrings_sinks;
+  Output.meta "callstring sinks:\n";
+  output_callstrings Output.meta callstrings_sinks;
 
   (** Callstring order: @foo @bar @memcpy *)
 
@@ -231,7 +233,9 @@ let lca_nth_of_sink project nth sink callgraph =
       let l = Seq.to_list sink_cs in
       match List.nth l nth with
       | Some lca_tid ->
-        Format.printf "lca: %s\n%!" @@ Tid.name lca_tid;
+        let s = Format.sprintf "lca: %s\n%!" @@ Tid.name lca_tid in
+        Format.printf "%s" s;
+        Output.meta s;
         (* We have to reverse sink_cs for make_cut. lca at root of sink still
            uses that version. this should be fixed *)
           let group = make_cut ~nth project lca_tid (rev_seq sink_cs) sink i in
