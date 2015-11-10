@@ -262,10 +262,16 @@ let produce project options path_dir trim_dir max_depth trim check =
       syncs the sub with the hide_non_existing operation on the graph.
       3) Use this as the underlying representation of terms of the graph that we
       will find paths over. Note that back-edges/jmps are not removed in this
-      underlying representation (and they don't need to be). Such back edges/jmp terms
-      are removed on a per-path basis.
+      underlying representation (and they don't need to be). Such back edges/jmp
+      terms are removed on a per-path basis.
   *)
   let sub' = view_to_sub filtered_graph graph sub |> kill_non_existing_jmps in
+
+  let module Q = (val filtered_graph : Graphlib.Graph with
+                   type edge = Graphlib.Tid.Tid.edge and
+                 type node = tid and
+                 type t = Graphlib.Tid.Tid.t) in
+  Format.printf "Size filtered: %d\n" @@ Seq.length (Q.nodes graph);
 
   (** Finally, create the context *)
   let trim = {trim with trim_sub = sub'} in
@@ -289,8 +295,7 @@ let produce project options path_dir trim_dir max_depth trim check =
      sub := doctored_trim;*)
 
   let sub_graph = Sub.to_graph init_ctxt.trim.trim_sub in
-  let num_paths =
-    Util.num_paths_dag filtered_graph sub_graph trim.src_tid in
+  let num_paths = Util.num_paths_dag filtered_graph sub_graph trim.src_tid in
 
   Format.printf "NUM PATHS: %d\n%!" num_paths;
   Output.paths trim_dir
