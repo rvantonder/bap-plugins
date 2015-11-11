@@ -52,3 +52,5 @@ end
 val dep_blk_span : tid seq -> Sub.t -> int
 
 val get_arg_as_string : project -> blk term -> tid -> string option
+
+val get_arg_as_const : project -> Blk.t -> Tid.t -> int option

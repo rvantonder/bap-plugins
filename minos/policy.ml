@@ -59,6 +59,12 @@ let get_arg_as_string project blk def_tid =
     try_get_rodata project w
   | _ -> None
 
+(** TODO: ok_exn will bite you *)
+let get_arg_as_const project blk def_tid =
+  match Def.rhs (def_of_tid blk def_tid) with
+  Bil.Int w ->  Word.to_int w |> ok_exn |> Option.some
+  | _ -> None
+
 module Predicate = struct
 
   let arg_is_const_0 blk def_tid =
