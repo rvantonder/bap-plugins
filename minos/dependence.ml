@@ -101,7 +101,6 @@ let inter_dep deps1 deps2 =
   Tid.Set.inter (Tid.Set.of_list (Seq.to_list deps2)) |>
   Tid.Set.to_sequence
 
-(** TODO: refactor to use Ivan's highlighter *)
 let highlight_cli ?(highlight=[]) (ctxt : Check.ctxt) sub dependence =
   let open Color in
   let output = "" in

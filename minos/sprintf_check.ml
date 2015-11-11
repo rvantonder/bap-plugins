@@ -9,19 +9,34 @@ open Policy
 module P = Policy.Predicate
 
 (** CHECK *)
-let max_paths = 300
+let max_paths = 0
 
 let should_produce' ctxt args sink_blk =
   match args with
-  | {arg1 = Some (tid,_,_)} when
-      P.arg_is_not_rodata ctxt.project sink_blk tid ->
+  | {arg2 = Some (tid,_,_)}
+    when P.arg_is_not_string ctxt.project sink_blk tid ->
     Output.trim_priority ctxt.trim_dir 0;
+    Output.misc (Format.sprintf "Producing X\n");
     true
-  | {arg1 = Some(tid,_,_)} when
-      P.arg_rodata_contains ctxt.project sink_blk tid "%" ->
+  | {arg1 = Some (tid1,_,_); arg2 = Some (tid2,_,_)}
+    when P.arg_is_not_const sink_blk tid2 -> (** len is symbolic, string is constant *)
+    let str =
+      Policy.get_arg_as_string ctxt.project sink_blk tid1 |> Util.val_exn in
+    Output.misc (Format.sprintf "Found sprintf argument \"%s\" (len symbolic)\n" str);
     Output.trim_priority ctxt.trim_dir 1;
     true
-  | _ -> false
+  | {arg1 = Some (tid1,_,_); arg2 = Some (tid2,_,_)}
+    when P.arg_is_const sink_blk tid2 -> (** string is constant, len is constant *)
+    let str =
+      Policy.get_arg_as_string ctxt.project sink_blk tid1 |> Util.val_exn in
+    let len =
+      Policy.get_arg_as_const ctxt.project sink_blk tid2 |> Util.val_exn in
+    Output.misc (Format.sprintf "Found sprintf argument \"%s\" with len %s\n" str len);
+    Output.trim_priority ctxt.trim_dir 1;
+    false
+  | _ ->
+    Output.trim_priority ctxt.trim_dir 5;
+    false
 
 (** CHECK *)
 let check_path' inter_dependence path_attrs sub_path sink_blk =
