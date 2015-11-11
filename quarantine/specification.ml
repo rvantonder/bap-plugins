@@ -3,7 +3,27 @@ open Bap.Std
 open ARM.CPU
 open Spec.Language
 
+(** Introduces taint, but no model?
+  define "recvfrom_reaches_system" [
+    rule "if_system_argument_depends" (* rule name *)
+      [p := term v; (* any term *) (* rule premise *)
+       r := sub "recvfrom" []] (* rule premise *)
+      [z := sub "system" [y]] (* rule conclusion *)
+  ] [r/p; y/p]; (* constraints. Input to system depends on buffer of recv (arg1) *)
+*)
+
 let spec = [
+  define "recvfrom_reaches_system" [
+    rule "if_system_argument_depends" (* rule name *)
+      [
+        p := term v;
+        call "system" [x]
+      ]
+      [call "recvfrom" [y]]
+  ] [y=r1; x=r0; y/p; ]; (* can't add x/p :'( *)
+  (** Setting an argument constraint x=r0|r1 of a premise causes no
+      models to generate*)
+
   define "malloc_is_safe" [
     rule "if_some_jmp_depends"
       [p := sub "malloc" []]

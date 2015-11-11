@@ -1,10 +1,11 @@
 OPTS = -L../header -lheader --header-file=../header/libc.h ${options}
 case = *
-TEST = tests/test${case}.c
+#TEST = tests/test${case}.c
+TEST = test-recv-system/test-system-recv-1.c
 
 
 quarantine : *.ml
-		bapbuild quarantine.plugin
+		bapbuild quarantine.plugin -pkg bin_prot.syntax
 
 header : ../header/*.ml
 		make -C ../header

@@ -16,6 +16,13 @@ let is_interesting_sub sub = true
 
 type marker = {mark : 'a. 'a term -> 'a term}
 
+let print_tainted t taints =
+  Map.iter taints ~f:(fun ~key ~data ->
+      printf "tid %a : %a %a\n"
+        Tid.pp (Term.tid t)
+        Var.pp key
+        Taint.pp_taints data)
+
 let mark_if_visited ctxt =
   let mark t =
     if Set.mem ctxt#visited (Term.tid t)
@@ -27,8 +34,12 @@ let mark_if_tainted (ctxt : Main.result) =
     let vars = ctxt#taints_of_term (Term.tid t) in
     if Map.is_empty (vars)
     then t else
-      Term.set_attr (Term.set_attr t foreground `red)
-        Taint.vars vars in
+      begin
+        print_tainted t vars;
+          Term.set_attr (Term.set_attr t foreground `red)
+          Taint.vars vars
+      end
+  in
   {mark}
 
 let if_seeded =
@@ -173,6 +184,7 @@ let main proj =
   let sol = Solver.solve s prog in
   printf "%a" (Solver.pp_solution `unsatisfied) sol;
   printf "%a" (Solver.pp_solution `satisfied) sol;
+  printf "%a" (Solver.pp_solution `unrecognized) sol;
   proj
 
 
