@@ -138,14 +138,7 @@ module Plugin (E : sig val project : project val options : options end) = struct
      | "" -> Format.printf "~Check selected: NONE\n"
      | _ ->  Format.printf "~Check selected: %s\n" options.check);
     Format.printf "~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
-    match options.check with
-    | "memcpy" -> Check_suite.memcpy_check
-    | "sql" -> Check_suite.sql_check
-    | "system" -> Check_suite.system_check
-    | "strcpy" -> Check_suite.strcpy_check
-    | "atoi" -> Check_suite.strtol_check
-    | "sprintf" -> Check_suite.sprintf_check
-    | _ -> Check_suite.ident
+    Check_suite.select options.check
 
   let _v tag s =
     if options.debug then

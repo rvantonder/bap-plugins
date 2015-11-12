@@ -36,7 +36,7 @@ module Predicate : sig
   (** The path (subroutine) contains a call, e.g., "@.malloc" *)
   val contains_call : string -> Sub.t -> bool
 
-  (** The path (subroutine) contains a call, e.g., "@.malloc" *)
+  (** The path (subroutine) contains any of these call, e.g., "@.malloc" *)
   val contains_calls : string list -> Sub.t -> bool
 
   (** Check whether defs containt an ITE (dependencies) *)

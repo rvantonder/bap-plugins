@@ -14,25 +14,15 @@ let max_paths = 0
 let should_produce' ctxt args sink_blk =
   Format.printf "In should produce\n%!";
   match args with
-  | {arg3 = Some (tid,_,_)}
+  | {arg2 = Some (tid,_,_)}
     when P.arg_is_not_string ctxt.project sink_blk tid ->
     Output.trim_priority ctxt.trim_dir 0;
     Output.misc (Format.sprintf "Producing X\n");
-    true
-  | {arg3 = Some (tid1,_,_); arg2 = Some (tid2,_,_)}
-    when P.arg_is_not_const sink_blk tid2 -> (** len is symbolic, string is constant *)
+    false
+  | {arg2 = Some (tid2,_,_)} -> (** arg must be a string *)
     let str =
-      Policy.get_arg_as_string ctxt.project sink_blk tid1 |> Util.val_exn in
-    Output.misc (Format.sprintf "Found sprintf argument \"%s\" (len symbolic)\n" str);
-    Output.trim_priority ctxt.trim_dir 1;
-    true
-  | {arg3 = Some (tid1,_,_); arg2 = Some (tid2,_,_)}
-    when P.arg_is_const sink_blk tid2 -> (** string is constant, len is constant *)
-    let str =
-      Policy.get_arg_as_string ctxt.project sink_blk tid1 |> Util.val_exn in
-    let len =
-      Policy.get_arg_as_const ctxt.project sink_blk tid2 |> Util.val_exn in
-    Output.misc (Format.sprintf "Found sprintf argument \"%s\" with len %d\n" str len);
+      Policy.get_arg_as_string ctxt.project sink_blk tid2 |> Util.val_exn in
+    Output.misc (Format.sprintf "Found sprintf argument \"%s\"\n" str);
     Output.trim_priority ctxt.trim_dir 1;
     false
   | _ ->
@@ -76,6 +66,7 @@ let run ctxt =
   check_path sink_blk ctxt.sub_path ctxt path_attr
 
 let should_produce ctxt =
+  Format.printf "checking should produce\n%!";
   let open Trim in
   (** AUX DATA *)
   (* TODO hardcoding is bad. Also, negative with overflow *)
