@@ -267,11 +267,10 @@ let produce project options path_dir trim_dir max_depth trim check =
   *)
   let sub' = view_to_sub filtered_graph graph sub |> kill_non_existing_jmps in
 
-  let module Q = (val filtered_graph : Graphlib.Graph with
+  let module G' = (val filtered_graph : Graphlib.Graph with
                    type edge = Graphlib.Tid.Tid.edge and
                  type node = tid and
                  type t = Graphlib.Tid.Tid.t) in
-  Format.printf "Size filtered: %d\n" @@ Seq.length (Q.nodes graph);
 
   (** Finally, create the context *)
   let trim = {trim with trim_sub = sub'} in
@@ -286,13 +285,6 @@ let produce project options path_dir trim_dir max_depth trim check =
      g = filtered_graph;
      check;
      trim_dir} in
-
-  (** this turns out nice sub into a single path. don't do it *)
-  (**
-     let lol = Term.enum blk_t !sub |> Seq.map ~f:Term.tid in
-     let blk_path = remove_jmps_path lol in
-     let doctored_trim = sub_of_blk_path blk_path in
-     sub := doctored_trim;*)
 
   let sub_graph = Sub.to_graph init_ctxt.trim.trim_sub in
   let num_paths = Util.num_paths_dag filtered_graph sub_graph trim.src_tid in
@@ -313,6 +305,9 @@ let produce project options path_dir trim_dir max_depth trim check =
 
   if options.path_counts_only then
     init_ctxt
+  else if Seq.length (G'.nodes sub_graph) = 0 then
+    (Format.printf "Not producing, sink no longer reachable via source\n%!";
+     init_ctxt)
   else if check.should_produce check_ctxt then
     Pathlib.fold_paths_graph filtered_graph ~sub:sub_graph
       ~state:init_local_state

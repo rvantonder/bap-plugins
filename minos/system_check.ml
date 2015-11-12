@@ -9,7 +9,7 @@ open Policy
 module P = Policy.Predicate
 
 (** CHECK *)
-let max_paths = 0
+let max_paths = 30
 
 (** This is before paths. We will fold const on the sub with
     respect to system *)
@@ -18,29 +18,72 @@ let should_produce' ctxt args sink_blk =
   | {arg1 = Some (tid,_,_)}
     when P.arg_is_not_string ctxt.project sink_blk tid ->
     Output.trim_priority ctxt.trim_dir 0;
-    Output.misc (Format.sprintf "Producing X\n");
+    Output.misc (Format.sprintf "Producing for symbolic\n");
     true
-  | {arg1 = Some (tid,_,_)} ->
+  | {arg1 = Some (tid,_,_)} -> (** Arg must be a string *)
     let str =
       Policy.get_arg_as_string ctxt.project sink_blk tid |> Util.val_exn in
-    Output.misc (Format.sprintf "Found system argument \"%s\"\n" str);
-    Output.trim_priority ctxt.trim_dir 1;
+    if String.is_substring ~substring:"%" str then (
+      Output.misc (Format.sprintf "Found system argument with format specifier\"%S\"\n" str);
+      Output.trim_priority ctxt.trim_dir 0)
+    else (
+      Output.misc (Format.sprintf "Found system argument \"%S\"\n" str);
+      Output.trim_priority ctxt.trim_dir 1);
     false
   | _ ->
     Output.trim_priority ctxt.trim_dir 5;
     false
 
+(** helper function to resolve constant string arguments to sprintf/snprintf *)
+let printf_arg ctxt sub =
+  (** get the blk closest at the end of the path that calls sprintf or snprintf *)
+  let blks =
+    Term.enum blk_t sub |> Seq.fold ~init:Seq.empty ~f:(fun acc blk ->
+        if List.exists (Util.calls_of_blk_str blk) ~f:(fun s ->
+            s = "@sprintf" || s = "@snprintf") then
+          (blk ^:: acc) else acc) in
+  match Seq.hd blks with
+  | Some blk ->
+    (** Infer args *)
+    (** return the string it contains *)
+    let args = Check_tmpl.infer_args ctxt blk in
+    (match args with
+     | {arg2 = Some (tid,_,_)}
+       when P.arg_is_string ctxt.project blk tid ->
+       Policy.get_arg_as_string ctxt.project blk tid
+     | {arg3 = Some (tid,_,_)}
+       when P.arg_is_string ctxt.project blk tid ->
+       Policy.get_arg_as_string ctxt.project blk tid
+     | _ -> None)
+  | None -> None
+
 (** CHECK *)
-let check_path' inter_dependence path_attrs sub_path sink_blk =
+(** Path contains a system with symbolic argument. Check if
+    it is preceded by a call to sprintf or snprintf *)
+let check_path' ctxt inter_dependence path_attrs sub_path sink_blk =
   match path_attrs with
   | {args = {arg1 = Some (_,_,dep)}; jmp_deps; num_blks} when
       P.size_eq_0 inter_dependence &&
-      Policy.dep_blk_span dep sub_path = 1
-    -> 0
+      Policy.dep_blk_span dep sub_path = 1 &&
+      P.contains_calls ["@sprintf"; "@snprintf"] sub_path
+    -> (match printf_arg ctxt sub_path with
+        | Some s -> Output.misc (Format.sprintf "s[n]printf arg: \"%S\"\n" s); 1
+        | None -> 1)
+  | {args = {arg1 = Some (_,_,dep)}; jmp_deps; num_blks} when
+      P.size_eq_0 inter_dependence &&
+      P.contains_calls ["@sprintf"; "@snprintf"] sub_path
+    -> (match printf_arg ctxt sub_path with
+        | Some s -> Output.misc (Format.sprintf "s[n]printf arg: \"%S\"\n" s); 2
+        | None -> 2)
+  | {args = {arg1 = Some (_,_,dep)}; jmp_deps; num_blks} when
+      P.contains_calls ["@sprintf"; "@snprintf"] sub_path
+    -> (match printf_arg ctxt sub_path with
+        | Some s -> Output.misc (Format.sprintf "s[n]printf arg: \"%S\"\n" s); 3
+        | None -> 3)
   | {args = {arg1 = Some (_,_,dep)}; jmp_deps; num_blks} when
       P.size_eq_0 inter_dependence
-    -> 1
-  | _ -> 5
+    -> 4 (** symbolic, but no strings before? strange. *)
+  | _ -> 0
 
 let check_path sink_blk sub_path (ctxt : Check.ctxt) path_attrs =
   (** AUX DATA *)
@@ -54,7 +97,7 @@ let check_path sink_blk sub_path (ctxt : Check.ctxt) path_attrs =
   Dependence.output sub_path arg_deps path_attrs.jmp_deps
     inter_dependence jmp_tids ctxt;
 
-  check_path' inter_dependence path_attrs sub_path sink_blk
+  check_path' ctxt inter_dependence path_attrs sub_path sink_blk
 
 (** Infer arguments from sink blk, if sink blk is the sink tid. Then
     check the path. *)
