@@ -300,12 +300,15 @@ let consume sub_path (check : Check.t) (ctxt : Check.ctxt) =
   Format.printf "Path (as program): ====================\n \
                  %a\n====================" Program.pp p;
 
-  (** TODO Seed the first def *)
-
+  (** TODO Seed the first def. right now seeds all *)
+  let p = Term.map sub_t p ~f:(fun sub ->
+      Term.map blk_t sub ~f:(fun blk ->
+          Term.map def_t blk ~f:(fun def ->
+              seed def))) in
   (** Run taint over this path *)
   let start_sub = Term.first sub_t p |> Util.val_exn |> Term.tid in
   (**                  Term.first blk_t |> Util.val_exn |>
-                    Term.first def_t |> Util.val_exn |> Term.tid in*)
+                       Term.first def_t |> Util.val_exn |> Term.tid in*)
 
 
   Format.printf "Start point: %a\n%!" Tid.pp start_sub;
@@ -331,5 +334,5 @@ let consume sub_path (check : Check.t) (ctxt : Check.ctxt) =
   (** Priority type may change, so stick with pattern matching *)
   (** Without SSA, dependence matching fails and so does my check. comment out for now*)
   (**
-  match check.run ctxt with
-  | p -> Output.path_priority ctxt.path_dir ctxt.count p*)
+     match check.run ctxt with
+     | p -> Output.path_priority ctxt.path_dir ctxt.count p*)
