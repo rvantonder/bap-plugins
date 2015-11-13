@@ -451,6 +451,7 @@ let display_tainted ctxt tid =
 let seed t =
   Term.set_attr t Taint.seed (Term.tid t)
 
+
 let consume sub_path (check : Check.t) (ctxt : Check.ctxt) =
   (** Wrap sub_path in a program term so it doesn't complain about
       entry point not found. It still wants a sub within program though *)
@@ -458,30 +459,28 @@ let consume sub_path (check : Check.t) (ctxt : Check.ctxt) =
     let new_p = Program.Builder.create () in
     Program.Builder.add_sub new_p sub_path;
     (** Also add sprintf/system calls *)
-    (**let sprintf_tid = Tid.(!"@sprintf") in
+    let sprintf_tid = Tid.(!"@sprintf") in
     let system_tid = Tid.(!"@system") in
     let sub1 = Util.sub_of_tid ctxt.project sprintf_tid |> Util.val_exn in
     let sub2 = Util.sub_of_tid ctxt.project system_tid |> Util.val_exn in
     Program.Builder.add_sub new_p sub1;
-    Program.Builder.add_sub new_p sub2;*)
+    Program.Builder.add_sub new_p sub2;
     Program.Builder.result new_p in
 
-  (**
   let arch = Project.arch ctxt.project in
   let args = args_of_file "libc.h" in
   let prog = fill_args arch args prog in
-  *)
 
   Format.printf "Path (as program, with args): \n \
                  %a\n====================\n" Program.pp prog;
 
-  let p = Term.map sub_t prog ~f:(fun sub ->
+  let prog = Term.map sub_t prog ~f:(fun sub ->
       Term.map blk_t sub ~f:(fun blk ->
           Term.map def_t blk ~f:(fun def ->
               Format.printf "Seeding %a:%a" Tid.pp (Term.tid def) Def.pp def;
               seed def))) in
   (** Run taint over this path *)
-  let start_sub = Term.first sub_t p |> Util.val_exn |> Term.tid in
+  let start_sub = Term.first sub_t prog |> Util.val_exn |> Term.tid in
   (**                  Term.first blk_t |> Util.val_exn |>
                        Term.first def_t |> Util.val_exn |> Term.tid in*)
 
@@ -515,3 +514,59 @@ let consume sub_path (check : Check.t) (ctxt : Check.ctxt) =
   (**
      match check.run ctxt with
      | p -> Output.path_priority ctxt.path_dir ctxt.count p*)
+
+
+(*
+
+
+
+  (** Wrap sub_path in a program term so it doesn't complain about
+      entry point not found. It still wants a sub within program though *)
+  let prog =
+    let new_p = Program.Builder.create () in
+    Program.Builder.add_sub new_p sub_path;
+    Program.Builder.result new_p in
+  Format.printf "Path (as program): \n \
+                 %a\n====================\n" Program.pp prog;
+
+  let prog = Term.map sub_t prog ~f:(fun sub ->
+      Term.map blk_t sub ~f:(fun blk ->
+          Term.map def_t blk ~f:(fun def ->
+              Format.printf "Seeding %a:%a" Tid.pp (Term.tid def) Def.pp def;
+              seed def))) in
+  (** Run taint over this path *)
+  let start_sub = Term.first sub_t prog |> Util.val_exn |> Term.tid in
+  (**                  Term.first blk_t |> Util.val_exn |>
+                       Term.first def_t |> Util.val_exn |> Term.tid in*)
+
+  Format.printf "Start point: %a\n%!" Tid.pp start_sub;
+  let k = 500 in (** needed? *)
+  (*let p = Project.program ctxt.project in*) (* Nope, you will use my program term *)
+  (** This is the unified context over taint and biri *)
+  let taint_ctxt = new context prog k in
+  (** This is a mapping of sub to blk addrs *)
+  let mapping = create_mapping prog in
+  (** Fetch the value at a given address *)
+  let memory = memory_lookup ctxt.project in
+  (** The interpreter, instantiated with context *)
+  let biri = new main def_summary memory mapping def_const in
+  let map _ = None in (** no idea *)
+  let res = run_from_point map prog biri (`Term start_sub) in
+  let exec_res = (SM.exec res taint_ctxt :> result) in
+  (** Check taint of first def in the last (sink) blk *)
+  let first_sub = Term.first sub_t prog |> Util.val_exn in
+  (*let tid = Util.blk_of_tid first_sub ctxt.trim.sink_tid |> Term.first def_t |>
+            Util.val_exn |> Term.tid in*)
+  let all_tids = Term.enum sub_t prog |> Seq.fold ~init:Seq.empty ~f:(fun acc sub ->
+      Term.enum blk_t sub |> Seq.fold ~init:acc ~f:(fun acc blk ->
+          Term.enum def_t blk |> Seq.fold ~init:acc ~f:(fun acc def ->
+              (Term.tid def) ^:: acc))) in
+  Seq.iter all_tids ~f:(fun tid ->
+      display_tainted exec_res tid);
+
+  (** Priority type may change, so stick with pattern matching *)
+  (** Without SSA, dependence matching fails and so does my check. comment out for now*)
+  (**
+     match check.run ctxt with
+     | p -> Output.path_priority ctxt.path_dir ctxt.count p*)
+*)
