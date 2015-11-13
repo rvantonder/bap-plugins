@@ -278,13 +278,16 @@ end
 let display_tainted ctxt tid =
   let taint_vars = ctxt#taints_of_term tid in
   Format.printf "Displaying taint for sink tid %a\n%!" Tid.pp tid;
-  Format.printf "Map size: %d\n%!" @@ Map.length taint_vars;
+  Format.printf "\t Map size: %d\n%!" @@ Map.length taint_vars;
   if Map.length taint_vars > 0 then
-    Map.iter taint_vars ~f:(fun ~key ~data ->
-        Format.printf "tid %a : %a %a\n%!"
-          Tid.pp tid
-          Var.pp key
-          Taint.pp_taints data)
+    begin
+      Map.iter taint_vars ~f:(fun ~key ~data ->
+          Format.printf "tid %a : key %a taints\n%a%!"
+            Tid.pp tid
+            Var.pp key
+            Taint.pp_taints data);
+      Format.printf "\n%!"
+    end
   else ()
 
 let seed t =
@@ -297,19 +300,18 @@ let consume sub_path (check : Check.t) (ctxt : Check.ctxt) =
     let new_p = Program.Builder.create () in
     Program.Builder.add_sub new_p sub_path;
     Program.Builder.result new_p in
-  Format.printf "Path (as program): ====================\n \
-                 %a\n====================" Program.pp p;
+  Format.printf "Path (as program): \n \
+                 %a\n====================\n" Program.pp p;
 
-  (** TODO Seed the first def. right now seeds all *)
   let p = Term.map sub_t p ~f:(fun sub ->
       Term.map blk_t sub ~f:(fun blk ->
           Term.map def_t blk ~f:(fun def ->
+              Format.printf "Seeding %a:%a" Tid.pp (Term.tid def) Def.pp def;
               seed def))) in
   (** Run taint over this path *)
   let start_sub = Term.first sub_t p |> Util.val_exn |> Term.tid in
   (**                  Term.first blk_t |> Util.val_exn |>
                        Term.first def_t |> Util.val_exn |> Term.tid in*)
-
 
   Format.printf "Start point: %a\n%!" Tid.pp start_sub;
   let k = 500 in (** needed? *)
@@ -324,12 +326,17 @@ let consume sub_path (check : Check.t) (ctxt : Check.ctxt) =
   let biri = new main def_summary memory mapping def_const in
   let map _ = None in (** no idea *)
   let res = run_from_point map p biri (`Term start_sub) in
-  let fres = (SM.exec res taint_ctxt :> result) in
+  let exec_res = (SM.exec res taint_ctxt :> result) in
   (** Check taint of first def in the last (sink) blk *)
-  let asdf = Term.first sub_t p |> Util.val_exn in
-  let tid = Util.blk_of_tid asdf ctxt.trim.sink_tid |> Term.first def_t
-            |> Util.val_exn |> Term.tid in
-  display_tainted fres tid;
+  let first_sub = Term.first sub_t p |> Util.val_exn in
+  (*let tid = Util.blk_of_tid first_sub ctxt.trim.sink_tid |> Term.first def_t |>
+            Util.val_exn |> Term.tid in*)
+  let all_tids = Term.enum sub_t p |> Seq.fold ~init:Seq.empty ~f:(fun acc sub ->
+      Term.enum blk_t sub |> Seq.fold ~init:acc ~f:(fun acc blk ->
+          Term.enum def_t blk |> Seq.fold ~init:acc ~f:(fun acc def ->
+              (Term.tid def) ^:: acc))) in
+  Seq.iter all_tids ~f:(fun tid ->
+      display_tainted exec_res tid);
 
   (** Priority type may change, so stick with pattern matching *)
   (** Without SSA, dependence matching fails and so does my check. comment out for now*)
