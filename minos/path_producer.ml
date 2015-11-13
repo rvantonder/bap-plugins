@@ -79,10 +79,10 @@ let process_valid path (ctxt : Ctxt.t) =
       (ctxt.path_dir^prefix) ctxt.trim.trim_sub path ctxt.count in
   let process () =
     try
-      let sub_path' = Util.make_call_returns_explicit sub_path in
-      let sub_path'' = Simple.simplify ctxt sub_path' in
-      let check_ctxt = consumer_ctxt_of_ctxt ctxt sub_path'' in
-      Path_consumer.consume sub_path'' ctxt.check check_ctxt
+      (**let sub_path' = Util.make_call_returns_explicit sub_path in
+      let sub_path'' = Simple.simplify ctxt sub_path' in *)
+      let check_ctxt = consumer_ctxt_of_ctxt ctxt sub_path in
+      Path_consumer.consume sub_path ctxt.check check_ctxt
     with
     | Not_found ->
       output_dot "path_no_simple_";
