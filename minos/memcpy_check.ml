@@ -18,7 +18,7 @@ open Policy
 module P = Policy.Predicate
 
 (** CHECK *)
-let max_paths = 300
+let max_paths = 30
 
 let should_produce' args sink_blk =
   match args with
