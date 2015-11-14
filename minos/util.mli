@@ -1,6 +1,8 @@
 open Bap.Std
 open Core_kernel
 
+exception Timeout
+
 (** Find a section by name, e.g. ".rodata" *)
 val find_section_by_name : project -> string -> mem option
 
@@ -75,3 +77,5 @@ val num_paths_dag :
 (module Bap.Std.Graphlib.Graph with type edge = Graphlib.Tid.Tid.edge and
 type node = tid and type t = Graphlib.Tid.Tid.t) ->
  Graphlib.Tid.Tid.t -> tid -> int
+
+val timeout : secs:int -> f:('a -> 'b) -> x:'a -> 'b

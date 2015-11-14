@@ -2,6 +2,7 @@ open Core_kernel.Std
 open Bap.Std
 open Check
 open Cabs
+open Util
 
 module SM = Monad.State
 open SM.Monad_infix
@@ -453,6 +454,7 @@ let seed t =
 
 
 let consume sub_path (check : Check.t) (ctxt : Check.ctxt) =
+  (*
   (** Wrap sub_path in a program term so it doesn't complain about
       entry point not found. It still wants a sub within program though *)
   let prog =
@@ -508,9 +510,12 @@ let consume sub_path (check : Check.t) (ctxt : Check.ctxt) =
               (Term.tid def) ^:: acc))) in
   Seq.iter all_tids ~f:(fun tid ->
       display_tainted exec_res tid);
+*)
 
   (** Priority type may change, so stick with pattern matching *)
   (** Without SSA, dependence matching fails and so does my check. comment out for now*)
-  (**
-     match check.run ctxt with
-     | p -> Output.path_priority ctxt.path_dir ctxt.count p*)
+  try
+    match Util.timeout ~secs:1 ~f:check.run ~x:ctxt with
+    | p -> Output.path_priority ctxt.path_dir ctxt.count p
+  with
+  | Timeout -> Format.printf "TIMEOUT!\n%!"; ()
