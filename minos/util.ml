@@ -472,3 +472,31 @@ let num_paths_dag
         Tid.Table.add_exn dp curr sum;
         sum
   in go start_tid
+
+
+exception Timeout
+
+let timeout_option ~secs ~f ~x =
+  let b = Sys.signal Sys.sigalrm (Sys.Signal_handle (fun _ -> raise Timeout)) in
+  if b <> Sys.Signal_default then failwith
+      "timeout: Expected exclusive use of alarm signal";
+  let cleanup () =
+    let _ = Unix.alarm 0 in
+    Sys.set_signal Sys.sigalrm b
+  in
+  try
+    let old = Unix.alarm secs in
+    if old <> 0 then failwith "timeout: Expected exclusive use of Unix.alarm";
+    let o = (f x) in
+    (* turn alarm off *)
+    cleanup ();
+    Some o
+  with
+  | Timeout -> cleanup (); None
+  | e -> cleanup (); raise e
+
+let timeout ~secs ~f ~x =
+  let f = timeout_option ~secs ~f in
+  match f ~x with
+  | Some x -> x
+  | None -> raise Timeout
