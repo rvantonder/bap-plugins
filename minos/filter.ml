@@ -5,6 +5,7 @@ type t = string -> bool
 
 let whitelist =
   [ "@\\..*" ; (* plt for x86 *)
+    "@sub_11E18"; "@sub_18324";
     "@memcpy"; (* plt for ARM *)
     "@recvfrom";
     "@recv";
