@@ -114,9 +114,10 @@ let path_priority _path_dir number priority =
   let filename = dir^(Format.sprintf "priority_%04d" priority) in
   write filename (Format.sprintf "Path: %04d\n" number)
 
-let output_trim src_tid sink_tid trim_sub cut_group_id i j profile =
+let output_trim with_dots src_tid sink_tid trim_sub cut_group_id i j profile =
   let open Profile in
-  trim_graph src_tid sink_tid trim_sub i j;
+  if with_dots then
+    trim_graph src_tid sink_tid trim_sub i j;
   trims @@ Format.sprintf "TRIM %d CASE %d\n" i j;
   trims "==================\n";
   let filename = Format.sprintf "trim_%04d_case_%04d/trim_%s_%s.dot"

@@ -1,6 +1,7 @@
 open Bap.Std
 open Core_kernel.Std
 open Cut
+open Options
 
 type trim = {
   trim_sub : Sub.t;
@@ -69,20 +70,23 @@ let trim sub src sink =
 
 (* returns a sequence of subs that start at the source and go to
    the sink. sub is lca in this case *)
-let trims d sub g highlight =
+let trims sub g highlight with_dots =
   let blks_call_src = g.src_caller_blks in
   let blks_call_sink = g.sink_caller_blks in
   let pairs = Seq.cartesian_product blks_call_src blks_call_sink in
   Seq.foldi ~init:Seq.empty pairs ~f:(fun j acc (src_blk, sink_blk) ->
       let res_src,src_tid = tid_from_blk_structure src_blk sub in
       let res_sink,sink_tid = tid_from_blk_structure sink_blk sub in
-      if res_src = 0 && res_sink = 0 then (* If the source and sink exist p*)
-        ( (*debug d src_tid sink_tid sub g.id;*)
-          let sub' = trim sub src_tid sink_tid in
+      if res_src = 0 && res_sink = 0 then (* If the source and sink exist *)
+        ( let sub' = trim sub src_tid sink_tid in
           match Term.length blk_t sub' with
-          | 0 -> Output.cut_graph `Invalid src_tid sink_tid sub g.id j;
+          | 0 ->
+            if with_dots then
+              Output.cut_graph `Invalid src_tid sink_tid sub g.id j;
             Format.printf "Sink is before source!\n%!"; acc
-          | _ -> Output.cut_graph `Valid src_tid sink_tid sub g.id j;
+          | _ ->
+            if with_dots then
+              Output.cut_graph `Valid src_tid sink_tid sub g.id j;
             let sub' = mark_with_no_return sub' sink_tid in
             let t = {trim_sub = sub';
                      src_tid;
@@ -90,6 +94,7 @@ let trims d sub g highlight =
                      cut_group = g} in
             t ^:: acc)
       else
-        (Output.cut_graph `Skipped src_tid sink_tid sub g.id j;
-          Format.printf "[x] Skipping pair %d->%d\n" res_src res_sink;
-          acc))
+        (if with_dots then
+           Output.cut_graph `Skipped src_tid sink_tid sub g.id j;
+         Format.printf "[x] Skipping pair %d->%d\n" res_src res_sink;
+         acc))

@@ -9,7 +9,7 @@
 type options = {
   check : string; (* the check to use *)
   config : string; (* config file, unused currently *)
-  debug: bool; (* activate debugging output *)
+  with_dots: bool; (* output dots for trims and cuts *)
   cuts_only: bool; (* produce only cut groups *)
   trims_only: bool; (* produce only trims *)
   path_counts_only: bool; (* perform only path counts *)
@@ -22,5 +22,6 @@ type options = {
   fold_consts : bool; (* perform fold_consts *)
   output_dot_path : bool; (* generate dot outputs for paths *)
   out_dir : string; (* specify an analysis output directory *)
+  max_depth_path : int; (* path length *)
   verbose : bool (* switch for outputting analysis results to terminal *)
 }

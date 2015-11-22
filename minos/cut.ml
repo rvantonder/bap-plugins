@@ -8,25 +8,17 @@ type src_config =
   }
 
 type cut_group = {
-  (* we will do similarity testing with the actual blks. Stores
-     the blks that call a given source *)
   src_caller_blks : Blk.t seq;
   sink_caller_blks : Blk.t seq;
-  (* The callstring from src to the lca *)
   src_callstring : tid seq;
   sink_callstring : tid seq;
-  (* The sub that calls src. src_caller_blks are all contained in
-     this sub *)
   src_caller_sub : Sub.t;
   sink_caller_sub : Sub.t;
-  lca_sub : Sub.t; (* root *)
+  lca_sub : Sub.t;
   lca_name : string;
   depth: int;
-  id: int; (* max depth we would have to inline to hit this *)
+  id: int;
 }
-
-(** The trim (reduced sub) and associated data *)
-
 
 let already_cut = Tid.Set.empty
 
@@ -161,7 +153,6 @@ let make_cut ~nth project lca_tid sink_cs sink id =
     blk_tids_of_caller sink_caller_sub_tid sink
     |> blks_of_caller sink_caller_sub in
 
-  (** TODO improve. Dedicated type *)
   let depth =
     match nth with
     | -1 -> Seq.length sink_cs
@@ -187,7 +178,6 @@ let lca_root_of_sink project sink callgraph : cut_group seq =
   print_callstrings ~v:true callstrings_sinks;
 
   (** No need to remove duplicates, should be uniqe *)
-
   Seq.foldi ~init:Seq.empty callstrings_sinks ~f:(fun i acc sink_cs ->
       let lca_tid = Seq.hd_exn sink_cs in
       (* nth:-1 means process the entire length *)
@@ -199,7 +189,6 @@ let lca_nth_of_sink project nth sink callgraph =
   Format.printf "ROOTING at NTH %d sink callstrings.\n" nth;
   Format.printf "===================================\n";
   Format.printf "callstring sinks:\n";
-
   let callstrings_sinks = callstrings project sink callgraph in
   print_callstrings ~v:true callstrings_sinks;
   Output.meta "callstring sinks:\n";

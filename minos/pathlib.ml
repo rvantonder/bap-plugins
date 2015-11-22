@@ -67,16 +67,22 @@ let debug succs blk =
       Format.printf "%s| " @@ Tid.to_string s);
   Format.printf "\n%!"
 
-let rec fold_paths_graph (module G : Graphlib.Graph with type edge = Graphlib.Tid.Tid.edge and type node =
- tid and type t = Graphlib.Tid.Tid.t) ~(sub : Graphlib.Tid.Tid.t) ~state ~acc ~(blk : tid) ~finish ~f =
-  let succs = G.Node.succs blk sub  in
-  (*debug succs blk;*)
-  match succs with
+let rec fold_paths_graph ?(rev=false)
+    (module G : Graphlib.Graph with
+      type edge = Graphlib.Tid.Tid.edge and
+    type node = tid and
+    type t = Graphlib.Tid.Tid.t)
+    ~(sub : Graphlib.Tid.Tid.t) ~state ~acc ~(blk : tid) ~finish ~f =
+  let next = if rev
+    then G.Node.preds
+    else G.Node.succs in
+  match next blk sub with
   | l when Seq.is_empty l -> finish state blk acc
   | children ->
     Seq.fold ~init:acc children
       ~f:(fun acc child ->
-          let continue = fold_paths_graph (module G) ~sub ~acc ~blk:child ~finish ~f in
+          let continue = fold_paths_graph ~rev (module G) ~sub ~acc ~blk:child
+              ~finish ~f in
           f state blk continue acc)
 
 let rec fold_paths ~sub ~state ~acc ~blk ~finish ~f =

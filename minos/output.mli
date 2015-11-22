@@ -47,4 +47,4 @@ val path_priority : string -> int -> int -> unit
 val trim_priority : string -> int -> unit
 
 (* Output bulk trim information *)
-val output_trim : tid -> tid -> Sub.t -> int -> int -> int -> Profile.t -> unit
+val output_trim : bool -> tid -> tid -> Sub.t -> int -> int -> int -> Profile.t -> unit

@@ -1,7 +1,7 @@
 type options = {
   check : string;
   config : string;
-  debug: bool;
+  with_dots: bool;
   cuts_only: bool;
   trims_only: bool;
   path_counts_only: bool;
@@ -14,5 +14,6 @@ type options = {
   fold_consts : bool;
   output_dot_path : bool;
   out_dir : string;
+  max_depth_path : int;
   verbose : bool
 }
