@@ -313,7 +313,7 @@ let produce project options path_dir trim_dir trim check =
     Pathlib.fold_paths_graph ~rev:check.reverse filtered_graph ~sub:sub_graph
       ~state:init_local_state
       ~acc:init_ctxt
-      ~blk:trim.sink_tid
+      ~blk:(if check.reverse then trim.sink_tid else trim.src_tid)
       ~finish
       ~f
   else
