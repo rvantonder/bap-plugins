@@ -4,6 +4,7 @@ open Pathlib
 open Options
 open Simple
 open Ctxt
+open Check
 open Trim
 
 let print_count ~v count =
@@ -102,6 +103,7 @@ let process_valid path (ctxt : Ctxt.t) =
 let analyze path (ctxt : Ctxt.t) =
   (** Pre-empt processing if the last tid in this path is not the
       sink. This should not happen. *)
+  let path = Seq.to_list_rev path |> Seq.of_list in
   if (Seq.hd_exn path) <> ctxt.trim.sink_tid then
     warn_invalid path ctxt
   else
@@ -281,7 +283,7 @@ let produce project options path_dir trim_dir max_depth trim check =
      project;
      options;
      trim;
-     max_depth;
+     max_depth = check.max_depth;
      g = filtered_graph;
      check;
      trim_dir} in
@@ -300,7 +302,6 @@ let produce project options path_dir trim_dir max_depth trim check =
     init_ctxt.trim.trim_sub init_ctxt.trim.cut_group.id 0 0 res;
      *)
 
-  let open Check in
   let check_ctxt = producer_ctxt_of_ctxt init_ctxt num_paths in
 
   if options.path_counts_only then
@@ -309,10 +310,10 @@ let produce project options path_dir trim_dir max_depth trim check =
     (Format.printf "Not producing, sink no longer reachable via source\n%!";
      init_ctxt)
   else if check.should_produce check_ctxt then
-    Pathlib.fold_paths_graph filtered_graph ~sub:sub_graph
+    Pathlib.fold_paths_graph ~rev:check.reverse filtered_graph ~sub:sub_graph
       ~state:init_local_state
       ~acc:init_ctxt
-      ~blk:trim.src_tid
+      ~blk:trim.sink_tid
       ~finish
       ~f
   else

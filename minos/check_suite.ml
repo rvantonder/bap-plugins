@@ -14,7 +14,9 @@ let sprintf_check = Sprintf_check.check
 let strcpy_check = Strcpy_check.check
 let sql_check = Sql_check.check
 let ident : Check.t = Check.({should_produce = (fun _ -> true);
-                              run = (fun _ -> 5)})
+                              run = (fun _ -> 5);
+                              reverse=false;
+                              max_depth=(-1)})
 let select = function
     | "memcpy" -> memcpy_check
     | "sql" -> sql_check

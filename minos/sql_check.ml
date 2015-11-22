@@ -57,4 +57,5 @@ let should_produce ctxt =
     false
 
 let check : (Check.t) =
-  {should_produce; run}
+  {should_produce; run;
+   reverse=false; max_depth=(-1)}

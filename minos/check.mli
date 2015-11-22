@@ -11,10 +11,12 @@ type ctxt = {
     project : project;
     trim : trim;
     trim_dir : string;
-    count : int
+    count : int;
 }
 
 type t = {
   should_produce : (ctxt -> bool);
-  run: (ctxt -> int)
+  run: (ctxt -> int);
+  reverse : bool;
+  max_depth : int
 }
