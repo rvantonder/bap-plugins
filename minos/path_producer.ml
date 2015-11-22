@@ -239,7 +239,7 @@ let view_to_sub graph_view graph sub : Sub.t =
      graph ~init:();
   Sub.Builder.result builder
 
-let produce project options path_dir trim_dir max_depth trim check =
+let produce project options path_dir trim_dir trim check =
   let module G = Graphlib.Tid.Tid in
   let sub = trim.trim_sub in
   let graph = Sub.to_graph sub in

@@ -14,6 +14,5 @@ type options = {
   fold_consts : bool;
   output_dot_path : bool;
   out_dir : string;
-  max_depth_path : int;
   verbose : bool
 }

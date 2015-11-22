@@ -77,11 +77,6 @@ module Cmdline = struct
     Arg.(value & opt (some string) None &
          info ["out_dir"] ~doc)
 
-  let max_depth_path : int option Term.t =
-    let doc = "The depth to which a path should be traversed." in
-    Arg.(value & opt (some int) None &
-         info ["max_depth_path"] ~doc)
-
   let verbose : bool Term.t =
     let doc = "Verbose output (intended for analysis)" in
     Arg.(value & flag & info ["verbose"] ~doc)
@@ -91,7 +86,7 @@ module Cmdline = struct
 
   let process_args check config srcs_f sinks_f with_dots cuts_only
       trims_only path_counts_only single_trim single_cut single_case
-      mem_to_reg fold_consts output_dot_path out_dir max_depth_path verbose =
+      mem_to_reg fold_consts output_dot_path out_dir verbose =
     let (!) opt default = Option.value opt ~default in
     let check = !check "" in
     let config = !config "" in
@@ -100,14 +95,13 @@ module Cmdline = struct
     let single_case = !single_case (-1) in
     let single_trim = !single_trim (-1) in
     let single_cut = !single_cut (-1) in
-    let max_depth_path = !max_depth_path (-1) in
     let out_dir = !out_dir "./analysis/" in
     { check; config; with_dots; cuts_only;
       trims_only; path_counts_only;
       srcs_f; sinks_f; single_trim;
       single_cut; single_case;
       mem_to_reg; fold_consts;
-      output_dot_path; out_dir; max_depth_path;
+      output_dot_path; out_dir;
       verbose}
 
   let parse argv =
@@ -128,7 +122,6 @@ module Cmdline = struct
                    $fold_consts
                    $output_dot_path
                    $out_dir
-                   $max_depth_path
                    $verbose),info)
     with
     | `Ok opts -> opts
@@ -203,7 +196,7 @@ module Plugin (E : sig val project : project val options : options end) = struct
       let path_dir = Format.sprintf "trim_%04d_case_%04d/paths/" i j in
 
       let glob = Path_producer.produce project
-          options path_dir trim_dir options.max_depth_path case (check ()) in
+          options path_dir trim_dir case (check ()) in
 
       Format.printf "%08d%!\n" glob.count;
 
