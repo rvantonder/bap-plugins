@@ -21,12 +21,6 @@ let data_sanitized src san sink =
   ] vars [reg *p; reg *q; reg *t; reg *r; reg *s] such
     that [s/p; t/r]
 
-let untrusted_input src sink =
-  define (src^"_may_leak_into_"^sink) [
-    rule ("if_there_is_data_dependency")
-      [sub src[p]]
-      [sub sink[q]]
-  ] vars [reg *p; reg *q] such that [q/p;]
 
 let magic source is_magic =
   define ("magic_door_via_"^source^"_may_exist") [
@@ -42,14 +36,14 @@ let magic source is_magic =
   ]
 
 
-let magic_may_leak_into n is_magic sink args = 
+let magic_may_leak_into n is_magic sink args =
   define ("magic_may_leak_into_"^sink^"_"^n) [
     rule "when_there_is_data_dependency"
       [p := use v]
       [sub sink args]
   ] vars [reg p; reg x; reg v] such
     that [forall v such that is_magic; x/p]
-  
+
 
 let escape = "_ZN7OpenDBX4Conn6escapeERKSsRSs"
 let append_s = "_ZNSs6appendERKSs"
@@ -63,7 +57,7 @@ let unescaped_sql append =
       [sub create[_';_';q]]
   ] vars [reg *p; reg *q] such that [q/p;]
 
-let magic_leaks_into_malloc = 
+let magic_leaks_into_malloc =
   define "magic_leaks" [
     rule "when_leaks"
       [p := use v]
@@ -71,18 +65,47 @@ let magic_leaks_into_malloc =
   ] vars [reg p; reg q; reg v] such
     that [forall v such that is_black; q/p]
 
+let untrusted_input src sink =
+  define (src^"_may_leak_into_"^sink) [
+    rule ("if_there_is_data_dependency")
+      [sub src[p]]
+      [sub sink[q]]
+  ] vars [reg *p; reg *q] such that [q/p;]
+
+let recvfrom_to x x_args =
+  define ("recvfrom_to_"^x) [
+      rule "if_data_dep"
+        [sub "recvfrom" [_';p;_';_';_';_']]
+        [sub x x_args]
+    ] vars [reg *p; reg *q] such that [q/p]
+
+let recv_to x x_args =
+  define ("recv_to_"^x) [
+      rule "if_data_dep"
+        [sub "recv" [_';p;_';_']]
+        [sub x x_args]
+    ] vars [reg *p; reg *q] such that [q/p]
+
 let spec = specification [
-    unescaped_sql append_n;
-    unescaped_sql append_s;
-    maybe_checked "malloc";
-    maybe_checked "calloc";
-    untrusted_input "fgets" "fopen";
-    data_sanitized "fgets" "realpath" "fopen";
-    magic "read" is_black;
-    magic "readv" is_black;
-    magic "recvmsg" is_black;
-    magic_may_leak_into "1" is_black "strcmp" [_';x];
-    magic_may_leak_into "2" is_black "strcmp" [x;_'];
-    magic_may_leak_into "3" is_black "strncmp" [_';x];
-    magic_may_leak_into "4" is_black "strncmp" [x;_'];
+    recvfrom_to "system"  [q];
+    recvfrom_to "strcpy"  [_';q];
+    recvfrom_to "strncpy" [_';q;_'];
+    recvfrom_to "memcpy"  [_';q;_'];
+    recv_to "system"  [q];
+    recv_to "strcpy"  [_';q];
+    recv_to "strncpy"  [_';q;_'];
+    recv_to "memcpy"  [_';q;_'];
+    (*    unescaped_sql append_n;
+          unescaped_sql append_s;
+          maybe_checked "malloc";
+          maybe_checked "calloc";
+          untrusted_input "fgets" "fopen";
+          data_sanitized "fgets" "realpath" "fopen";
+          magic "read" is_black;
+          magic "readv" is_black;
+          magic "recvmsg" is_black;
+          magic_may_leak_into "1" is_black "strcmp" [_';x];
+          magic_may_leak_into "2" is_black "strcmp" [x;_'];
+          magic_may_leak_into "3" is_black "strncmp" [_';x];
+          magic_may_leak_into "4" is_black "strncmp" [x;_'];*)
   ]

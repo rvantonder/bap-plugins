@@ -47,15 +47,20 @@ let pp_unpat ppf pat =
 
 let pp_unpats ppf pats = List.iter pats ~f:(pp_unpat ppf)
 
-let pp_pat ppf (pat,t) =
+let pp_pat_below ppf (pat,t) =
+  fprintf ppf "%a: %a (FOUND) @;" Tid.pp t Pat.pp pat
+
+let pp_pat_above ppf (pat,t) =
   fprintf ppf "%a: %a@;" Tid.pp t Pat.pp pat
 
-let pp_pats ppf pats = List.iter pats ~f:(pp_pat ppf)
+let pp_pats_above ppf pats = List.iter pats ~f:(pp_pat_above ppf)
+
+let pp_pats_below ppf pats = List.iter pats ~f:(pp_pat_below ppf)
 
 let pp_model pp_miss defn ppf m =
   fprintf ppf "@[<v2>rule %s_%s ::=@ %a%s@;%a%a@]@;@;"
     defn m.rule
-    pp_pats m.prem line pp_pats m.conc pp_miss m.miss
+    pp_pats_above m.prem line pp_pats_below m.conc pp_miss m.miss
 
 let pp_nil ppf Nil = ()
 let pp_cons ppf (Cons (x,xs)) =
