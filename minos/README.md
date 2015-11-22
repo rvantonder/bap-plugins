@@ -63,4 +63,12 @@ analysis-test-system-1/
     └── trims.txt
 ```
 
+## Comments
+
+Minos is useful when run in conjunction with quarantine. Minos answers the
+question "have I covered all paths" and "how many paths are there" for a
+given source/sink
+
 ## Run scripts
+
+

@@ -285,9 +285,8 @@ let run project options =
     end) in
   Main.main ()
 
-
 let main argv project =
   let options = Cmdline.parse argv in
   run project options
 
-let () = Project.register_pass_with_args' "driver" main
+let () = Project.register_pass_with_args' "minos" main

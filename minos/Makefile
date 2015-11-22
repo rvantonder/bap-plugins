@@ -1,6 +1,6 @@
 .phony: all
 all :
-	bapbuild driver.plugin -pkg bin_prot.syntax -pkg FrontC
+	bapbuild minos.plugin -pkg bin_prot.syntax -pkg FrontC
 
 test:
 	ocaml test.ml
