@@ -103,7 +103,8 @@ let process_valid path (ctxt : Ctxt.t) =
 let analyze path (ctxt : Ctxt.t) =
   (** Pre-empt processing if the last tid in this path is not the
       sink. This should not happen. *)
-  let path = Seq.to_list_rev path |> Seq.of_list in
+  if ctxt.check.reverse then
+    let path = Seq.to_list_rev path |> Seq.of_list in
   if (Seq.hd_exn path) <> ctxt.trim.sink_tid then
     warn_invalid path ctxt
   else
