@@ -311,7 +311,10 @@ let produce project options path_dir trim_dir trim check =
     (Format.printf "Not producing, sink no longer reachable via source\n%!";
      init_ctxt)
   else if check.should_produce check_ctxt then
-    Pathlib.fold_paths_graph ~rev:check.reverse filtered_graph ~sub:sub_graph
+    Pathlib.fold_paths_graph
+      ~rev:check.reverse
+      filtered_graph
+      ~sub:sub_graph
       ~state:init_local_state
       ~acc:init_ctxt
       ~blk:(if check.reverse then trim.sink_tid else trim.src_tid)
