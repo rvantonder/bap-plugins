@@ -125,16 +125,17 @@ let finish local_state blk_tid (ctxt : Ctxt.t) =
   process_path local_state blk_tid `Terminal ctxt
 
 let f local_state blk_tid continue (ctxt : Ctxt.t) =
-  let current_path,depth = local_state in
-  let do_process_path exit_typ =
-    process_path local_state blk_tid exit_typ ctxt in
-  if already_seen current_path blk_tid then
-    do_process_path `Seen
-  else if depth = ctxt.max_depth then
-    do_process_path `Max_depth
-  else
-    let state = (blk_tid ^:: current_path, depth+1) in
-    continue ~state
+  if ctxt.sample = ctxt.count then ctxt else (** terminate path if sample hit *)
+    let current_path,depth = local_state in
+    let do_process_path exit_typ =
+      process_path local_state blk_tid exit_typ ctxt in
+    if already_seen current_path blk_tid then
+      do_process_path `Seen
+    else if depth = ctxt.max_depth then
+      do_process_path `Max_depth
+    else
+      let state = (blk_tid ^:: current_path, depth+1) in
+      continue ~state
 
 let debug_hide_edges e =
   Format.printf "Added edge %s\n%!" @@  Tid.name @@
@@ -179,13 +180,11 @@ let hide_non_existing sub graph_module =
 let debug_reachable reachable_src reachable_sink =
   Format.printf "Reachable src:\n%!\n";
   Set.iter reachable_src ~f:(fun x ->
-      Format.printf "%s |" @@ Tid.name @@
-      x);
+      Format.printf "%s |" @@ Tid.name @@ x);
   Format.printf "\n";
   Format.printf "Reachable sink:\n%!\n";
   Set.iter reachable_sink ~f:(fun x ->
-      Format.printf "%s |" @@ Tid.name @@
-      x);
+      Format.printf "%s |" @@ Tid.name @@x);
   Format.printf "\n"
 
 (** After removing edges, perform reachable *)
@@ -287,7 +286,8 @@ let produce project options path_dir trim_dir trim check =
      max_depth = check.max_depth;
      g = filtered_graph;
      check;
-     trim_dir} in
+     trim_dir;
+     sample = 10} in
 
   let sub_graph = Sub.to_graph init_ctxt.trim.trim_sub in
   let num_paths = Util.num_paths_dag filtered_graph sub_graph trim.src_tid in
@@ -310,7 +310,7 @@ let produce project options path_dir trim_dir trim check =
   else if Seq.length (G'.nodes sub_graph) = 0 then
     (Format.printf "Not producing, sink no longer reachable via source\n%!";
      init_ctxt)
-  else if check.should_produce check_ctxt then
+  else if check.should_produce check_ctxt || init_ctxt.sample > 0 then
     Pathlib.fold_paths_graph
       ~rev:check.reverse
       filtered_graph

@@ -27,7 +27,7 @@ let should_produce' ctxt args sink_blk =
       Output.misc (Format.sprintf "Found system argument with format specifier\"%S\"\n" str);
       Output.trim_priority ctxt.trim_dir 0)
     else (
-      Output.misc (Format.sprintf "Found system argument \"%S\"\n" str);
+      Output.misc (Format.sprintf "Found system argument %S\n" str);
       Output.trim_priority ctxt.trim_dir 1);
     false
   | _ ->
