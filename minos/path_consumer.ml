@@ -8,7 +8,7 @@ let consume sub_path (check : Check.t) (ctxt : Check.ctxt) =
   (** Without SSA, dependence matching fails and so does my check.
       comment out for now*)
   try
-    match Util.timeout ~secs:10 ~f:check.run ~x:ctxt with
+    match Util.timeout ~secs:3 ~f:check.run ~x:ctxt with
     | p -> Output.path_priority ctxt.path_dir ctxt.count p
   with
   | Timeout -> Format.printf "TIMEOUT!\n%!"; ()

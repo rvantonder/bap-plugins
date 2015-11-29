@@ -83,4 +83,5 @@ let should_produce ctxt =
 
 let check : (Check.t) =
   {should_produce; run;
-   reverse=false; max_depth=(-1)}
+   reverse=false; max_depth=(-1);
+   sample=(-1); timeout=(-1)}

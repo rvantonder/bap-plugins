@@ -18,5 +18,7 @@ type t = {
   should_produce : (ctxt -> bool);
   run: (ctxt -> int);
   reverse : bool;
-  max_depth : int
+  max_depth : int;
+  sample : int;
+  timeout : int
 }

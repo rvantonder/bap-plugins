@@ -287,7 +287,7 @@ let produce project options path_dir trim_dir trim check =
      g = filtered_graph;
      check;
      trim_dir;
-     sample = 10} in
+     sample = check.sample} in
 
   let sub_graph = Sub.to_graph init_ctxt.trim.trim_sub in
   let num_paths = Util.num_paths_dag filtered_graph sub_graph trim.src_tid in
