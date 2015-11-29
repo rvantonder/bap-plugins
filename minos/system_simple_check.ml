@@ -98,8 +98,8 @@ let should_produce ctxt =
     false
 
 let check : (Check.t) =
-  let max_depth = 100 in
-  let sample = 10 in  (** contrast with 1000 :3 *)
+  let max_depth = 1000 in
+  let sample = 2000 in
   let timeout = 3 in
   let reverse = true in
   {should_produce; run;

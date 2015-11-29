@@ -133,5 +133,49 @@ e) Indirect call resolution along paths when possible through constant folding
 ## Run scripts
 
 
+## Example
 
+A wonderful example of this in operation is running paths from the `system`
+sink backwards, with a given depth and given amount of path samples.
 
+With the following settings:
+
+```
+let check : (Check.t) =
+  let max_depth = 100 in
+  let sample = 10 in  (** Note sample size of 10*)
+  let timeout = 3 in
+  let reverse = true in
+  {should_produce; run;
+   reverse;
+   max_depth;
+   sample;
+   timeout}
+```
+we get the following output:
+
+```
+Found system argument "/bin/dslmode"
+Found system argument "/bin/ping -f -c 2 google.com"
+Found system argument "/bin/ping -f -c 2 216.109.112.135"
+Found system argument "/bin/ping -f -c 2 www.linksys.com"
+Found system argument "/bin/ping -f -c 2 66.94.234.13"
+Found system argument "reboot"
+```
+
+Increasing the sample size to `100` results in the same output. But increasing
+it to `1000` results in additional calls being detected (not necessarily to
+system, but you get the point)
+
+```
+Found system argument "/bin/dslmode"
+Found system argument "/bin/ping -f -c 2 google.com"
+Found system argument "/bin/ping -f -c 2 216.109.112.135"
+Found system argument "/bin/ping -f -c 2 www.linksys.com"
+Found system argument "/bin/ping -f -c 2 66.94.234.13"
+Found system argument "reboot"
+s[n]printf arg: "%02X:%02X:%02X:%02X:%02X:%02X"
+s[n]printf arg: "%02X:%02X:%02X:%02X:%02X:%02X"
+s[n]printf arg: "%d"
+s[n]printf arg: "%d"
+```
