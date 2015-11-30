@@ -119,7 +119,6 @@ let ssa_trim (ctxt : Check.ctxt) =
 let should_produce ctxt =
   let open Trim in
   (** AUX DATA *)
-  (* TODO hardcoding is bad. Also, negative with overflow *)
 
   let test =
     let ctxt = ssa_trim ctxt in
@@ -128,7 +127,6 @@ let should_produce ctxt =
     let sink_blk = Term.find blk_t ctxt.trim.trim_sub ctxt.trim.sink_tid |>
                    Util.val_exn in
 
-    (*Format.printf "Processing sink blk: %s\n%!" (Blk.to_string sink_blk);*)
     let args = Check_tmpl.infer_args ctxt sink_blk in
     should_produce' ctxt args sink_blk in
 

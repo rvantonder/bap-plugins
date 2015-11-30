@@ -78,7 +78,7 @@ let run ctxt =
 let should_produce ctxt =
   let open Trim in
   (** AUX DATA *)
-  (* TODO hardcoding is bad. Also, negative with overflow *)
+
   if ctxt.num_paths < max_paths && ctxt.num_paths > 0 then
     let trim = ctxt.trim in
     let sink_blk = Term.find blk_t ctxt.trim.trim_sub trim.sink_tid |>

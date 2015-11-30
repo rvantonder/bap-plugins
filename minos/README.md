@@ -9,12 +9,14 @@ be set to be the entry block of a function.
 
 Minos achieves static path enumeration by first processing an entire program
 graph into subgraphs with respect to source and sink, and further transforms
-these subgraphs into DAGs by removing back edges.
+these subgraphs into DAGs by removing back edges. When paths between source
+and sink cross procedure boundaries, inlining is performed (for non-recursive
+procedures).
 
 ## Static checks
 
-A suite of static checks currently exist for Minos. Here's a list of current
-checks. Each check drives parameterizes Minos in the following ways:
+A suite of static checks currently exist for Minos. Each check parameterizes
+Minos in the following ways:
 
 1. The conditions under which all static paths should be enumerated are encoded in
 the `should_produce` function.
@@ -24,16 +26,22 @@ the `should_produce` function.
 3. Direction: whether paths should be enumerated from a sink to a source, or
    vice versa
 
-4. The maximum number of blocks that should be considered for a path (-1
-   implies maximum)
+4. The maximum number of blocks that should be considered for a path (`max_depth`)
+
+5. The number of paths to `sample`, corresponding to a subset of the total number of paths (for cases in which too many paths are produced)
+
+6. A per-path `timeout` parameter if a path cannot be checked in a specified amount of time
 
 The `should_produce` predicate usually guards against generating paths that
 are either uninteresting (because arguments to functions are constants) or
-because a particular trim produces too many paths in the DAG.
+because a particular trim produces too many paths in the DAG. Alternative ways
+to curb analyses are available through the `max_depth`, `sample`, and `timeout` options.
+See `check.mli` for the corresponding type definitions.
 
 #### A sample check : system
 
-Associated script: `run-test-system.sh`
+Associated script: `run-test-system.sh`. The sink is `system`, the source is
+the entry point point of the calling procedure.
 
 1. Path generation conditions: Input to `system()` is not a constant (string).
 
@@ -52,15 +60,29 @@ Read the following as "Priority 1 is output if a,b,c,d is satisfied"
 * 4 -> a,c
 * 0 -> a
 
-3) Path direction: Reverse
+3. Path direction: Reverse
 
-4) Default depth of path: 100
+4. Default depth of path: 100
 
-5) Default number of paths: 30
+5. Default number of paths: 30
+
+6. Sample: no limit
+
+7. Timeout: infinite
+
+#### Included checks
+
+Modules for static checks are still under heavy development, and subject to change.
+Currently, the following checks are provided as PoC examples:
+
+* `system_check` : check for system arguments
+* `memcpy_check` : check for unchecked length parameter to memcpy
+* `strtol_check` : check for unchecked destination pointer (detect possible cases where destination pointer can be NULL)
+* `sql_check`    : check for modification of a string without escape, before being executed
 
 ## Options
 
-Here are some of the more important options:
+Here are some of the more important plugin options:
 
 * `with_dots` : output dot files of cuts and trims, highlighting the
 source and sink blocks. A dot output of a cut will give show you the scope
@@ -79,6 +101,8 @@ or analyze the paths
 this is typically very expensive to run. Useful for debugging.
 
 * `out_dir` : specify an output directory. The default is `./analysis`.
+
+* `srcs` and `sinks` : specify files containing the source and sink of interest
 
 ## Usage
 
@@ -110,6 +134,7 @@ Minos is suitable for a variety of tasks. For instance, it can answer broad
 questions such as:
 
 * How many unique pairs of calls to function X and Y are reachable within a program?
+
 * How many paths exist between reachable pairs of calls to function X and Y in the program? (with respect to a DAG, discounting loops and recursive calls)
 
 It can be used to perform further specific queries such as:
@@ -126,56 +151,11 @@ features, such as:
 a) Resolving strings in binaries which are referenced by constants
 b) Inferring arguments to a number of libc functions
 c) Constant propagation and constant folding on paths
-d) Determining data dependence of register (i.e. not pointer) arguments to libc
+d) Determining data dependence of register (i.e. non pointer) arguments to libc
 functions
 e) Indirect call resolution along paths when possible through constant folding
 
 ## Run scripts
 
+`run-test-system.sh` is the go-to example for interacting with Minos.
 
-## Example
-
-A wonderful example of this in operation is running paths from the `system`
-sink backwards, with a given depth and given amount of path samples.
-
-With the following settings:
-
-```
-let check : (Check.t) =
-  let max_depth = 100 in
-  let sample = 10 in  (** Note sample size of 10*)
-  let timeout = 3 in
-  let reverse = true in
-  {should_produce; run;
-   reverse;
-   max_depth;
-   sample;
-   timeout}
-```
-we get the following output:
-
-```
-Found system argument "/bin/dslmode"
-Found system argument "/bin/ping -f -c 2 google.com"
-Found system argument "/bin/ping -f -c 2 216.109.112.135"
-Found system argument "/bin/ping -f -c 2 www.linksys.com"
-Found system argument "/bin/ping -f -c 2 66.94.234.13"
-Found system argument "reboot"
-```
-
-Increasing the sample size to `100` results in the same output. But increasing
-it to `1000` results in additional calls being detected (not necessarily to
-system, but you get the point)
-
-```
-Found system argument "/bin/dslmode"
-Found system argument "/bin/ping -f -c 2 google.com"
-Found system argument "/bin/ping -f -c 2 216.109.112.135"
-Found system argument "/bin/ping -f -c 2 www.linksys.com"
-Found system argument "/bin/ping -f -c 2 66.94.234.13"
-Found system argument "reboot"
-s[n]printf arg: "%02X:%02X:%02X:%02X:%02X:%02X"
-s[n]printf arg: "%02X:%02X:%02X:%02X:%02X:%02X"
-s[n]printf arg: "%d"
-s[n]printf arg: "%d"
-```

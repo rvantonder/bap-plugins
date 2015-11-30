@@ -44,7 +44,7 @@ let run ctxt =
 let should_produce ctxt =
   let open Trim in
   (** AUX DATA *)
-  (* TODO hardcoding is bad. Also, negative with overflow *)
+
   let test =
     let trim = ctxt.trim in
     let sink_blk = Term.find blk_t ctxt.trim.trim_sub trim.sink_tid |>
