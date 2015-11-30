@@ -11,14 +11,14 @@ type ctxt = {
     project : project;
     trim : trim;
     trim_dir : string;
-    count : int;
+    count : int; (* Current count *)
 }
 
 type t = {
   should_produce : (ctxt -> bool);
   run: (ctxt -> int);
-  reverse : bool;
-  max_depth : int;
-  sample : int;
+  reverse : bool; (* reverse the direction from sink to source *)
+  max_depth : int; (* depth to which to traverse *)
+  sample : int; (* number of paths to sample *)
   timeout : int
 }

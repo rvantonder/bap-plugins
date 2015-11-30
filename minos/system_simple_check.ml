@@ -64,7 +64,10 @@ let check_path' ctxt path_attrs sub_path sink_blk =
   | {args = {arg1 = Some _}; _} when
       P.contains_calls ["@sprintf"; "@snprintf"] sub_path
     -> (match printf_arg ctxt sub_path with
-        | Some s -> Output.misc (Format.sprintf "s[n]printf arg: %S\n" s); 5
+        | Some s ->
+          Output.misc (Format.sprintf
+                         "%04d s[n]printf arg: %S\n" ctxt.count s);
+          1
         | None -> 5)
   | _ -> 0
 
